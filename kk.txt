@@ -1,1 +1,763 @@
-kk
+Shell Lab Cheat Sheet – IT Workshop I (CSP 201)
+
+Covers Labsheets 1.1–1.6, grep/sed, awk, Weeks 4–6 and the Regex/sed assignment. Every entry shows the command, Out (what you would see) and Flags (what the options mean). All commands run as written inside ~/shell_lab after you paste the setup script.
+
+1. Files & Directories (Labsheet 1.1)
+
+- ls /
+  - Out: Names of files/dirs in the given path (current dir if omitted), alphabetical, in columns; hidden files not shown.
+  - Flags: none; optional path argument.
+
+* ls -al
+  - Out: Long listing incl. hidden files: permissions, links, owner, group, size, date, name; first line is total.
+  - Flags: -a all (dotfiles) / -l long format.
+* cd project1
+  - Out: Nothing; shell moves into that dir (confirm with pwd).
+  - Flags: none; takes relative path, absolute path (starts with /) or .. (up one level).
+* cd
+  - Out: Nothing; jumps to your home dir from anywhere (same as cd ~).
+  - Flags: none.
+* pwd
+  - Out: One line: absolute path of the current dir.
+  - Flags: none.
+* mkdir -p reports/jan reports/feb reports/mar
+  - Out: Nothing; creates the three dirs (and reports itself).
+  - Flags: -p create parents as needed, no error if it exists. Plain mkdir dir makes one dir.
+* touch a.txt b.txt c.txt
+  - Out: Nothing; creates empty files, or just refreshes the timestamp of existing ones.
+  - Flags: none; accepts many names.
+* cat > notes.txt
+  - Out: Nothing shown; type lines, press Ctrl+D to save. Overwrites the file.
+  - Flags: > overwrite / >> append instead.
+* cat notes.txt
+  - Out: Prints the whole file.
+  - Flags: none.
+* more count.txt
+  - Out: One screen at a time with a % indicator; Space next page, Enter next line, q quit. Forward-only.
+  - Flags: none (less can scroll back).
+* head -n 5 count.txt
+  - Out: First 5 lines (default 10; whole file if shorter).
+  - Flags: -n N number of lines.
+* tail -n 3 count.txt
+  - Out: Last 3 lines (default 10).
+  - Flags: -n N number of lines.
+* tail -f server.log
+  - Out: Last 10 lines, then stays running and prints new lines as they are appended; stop with Ctrl+C.
+  - Flags: -f follow / --retry keeps following after log rotation.
+* cp notes.txt backup.txt
+  - Out: Nothing; independent copy (silently overwrites an existing target).
+  - Flags: none; -p keeps permissions/timestamps; several files can go into one dir.
+* cp -r project1 project1_backup
+  - Out: Nothing; whole dir tree copied (if the target exists, the source goes inside it).
+  - Flags: -r recursive.
+* mv old.txt new.txt
+  - Out: Nothing; renames, or moves if the target is another dir/path. Silently overwrites.
+  - Flags: none.
+* ln -s notes.txt notes_link.txt
+  - Out: Nothing; ls -l then shows notes_link.txt -> notes.txt. Breaks if the target is deleted.
+  - Flags: -s symbolic (soft) link, not a hard link.
+* rm scratch.txt
+  - Out: Nothing; permanent delete (error if missing, no recycle bin).
+  - Flags: none; accepts many names and wildcards (rm *.tmp).
+* rm -r tmpdir
+  - Out: Nothing; dir and everything inside is deleted.
+  - Flags: -r recursive (add -i to confirm each).
+* rm -f nonexistent.txt
+  - Out: Nothing, and no error even if the file does not exist.
+  - Flags: -f force: no prompts, no complaints.
+* rm -rf junk
+  - Out: Nothing; silently wipes the dir tree. Most dangerous command here, no undo.
+  - Flags: -r recursive + -f force.
+
+2. Process Management (Labsheet 1.2)
+
+- ps
+  - Out: Snapshot table of your terminal's processes: PID TTY TIME CMD.
+  - Flags: ps aux / ps -ef show every process of every user.
+- ps aux | head -5
+  - Out: First 5 lines of the all-users process list (header + 4 processes).
+  - Flags: a all users / u user-oriented columns / x incl. no-terminal processes. -ef is the other style.
+- top
+  - Out: Full-screen live view: header (uptime, load, tasks, CPU, memory) + rows PID USER %CPU %MEM COMMAND, busiest first.
+  - Flags: none; inside: q quit, k kill a process. top -bn1 = one non-interactive snapshot. htop is friendlier.
+- sleep 300 &
+  - Out: Prints job number and PID like [1] 2150; prompt returns immediately.
+  - Flags: & run in background.
+- jobs
+  - Out: Lists background/stopped jobs as [1]+ Running sleep 300 &; + marks the current job.
+  - Flags: -p PIDs only.
+- kill 2150
+  - Out: Nothing (shell later prints [1]+ Terminated); sends a polite SIGTERM to that PID.
+  - Flags: -9 SIGKILL, force-stop when SIGTERM is ignored. Get PIDs from ps, top or $!.
+- killall sleep
+  - Out: Silent; terminates every process with that name.
+  - Flags: -9 force. Careful with similar names.
+- bg
+  - Out: Resumes the most recent stopped job in the background: [1]+ sleep 200 &.
+  - Flags: bg %n picks job n. Usual flow: run, Ctrl+Z, bg.
+- fg
+  - Out: Brings the + job to the foreground; prompt returns only when it ends (or you Ctrl+Z again).
+  - Flags: none.
+- fg 2
+  - Out: Brings job number 2 to the foreground.
+  - Flags: n = job number from jobs (fg %2 also works).
+
+3. System Info (Labsheet 1.3)
+
+- date
+  - Out: Current date/time, e.g. Sat Jul 25 05:03:38 UTC 2026.
+  - Flags: none; +format customises it (next entry).
+- date +%Y-%m-%d
+  - Out: Only the date, like 2026-07-25.
+  - Flags: +FORMAT with %Y year / %m month / %d day / %A weekday name / %H:%M:%S time.
+- cal
+  - Out: Calendar of the current month, weekdays across the top.
+  - Flags: none here; cal 1 2027 = that month/year, cal -y = whole year.
+- cal 1 2027
+  - Out: January 2027 calendar (shows which weekday Jan 1 falls on).
+  - Flags: args are month year.
+- uptime
+  - Out: One line: time, how long up, users, load average for the last 1/5/15 min.
+  - Flags: none.
+- w
+  - Out: Uptime line + table of logged-in users: USER TTY FROM LOGIN@ IDLE JCPU PCPU WHAT.
+  - Flags: none.
+- whoami
+  - Out: Single line: your effective username (e.g. root).
+  - Flags: none.
+- finger root
+  - Out: Login name, real name, home dir, shell, login status, mail/plan. Legacy; may need installing.
+  - Flags: none; the argument is the username.
+- uname -a
+  - Out: One line: kernel name, hostname, kernel release/version, architecture.
+  - Flags: -a all info; plain uname prints just Linux.
+- cat /proc/cpuinfo | head -13
+  - Out: CPU details for processor 0: vendor, model name, MHz, cache size, cores.
+  - Flags: head -13 first 13 lines; pipe to grep 'model name' for one detail.
+- cat /proc/meminfo | head -6
+  - Out: Memory stats in kB: MemTotal MemFree MemAvailable Buffers Cached SwapCached.
+  - Flags: head -6 first 6 lines. free summarises this same data.
+- man ls
+  - Out: Manual page (NAME, SYNOPSIS, DESCRIPTION, OPTIONS); Space/arrows scroll, /word searches, q quits.
+  - Flags: -a shows the page from every section one after another.
+- df -h
+  - Out: Table per mounted filesystem: Size Used Avail Use% Mounted on. Use% near 100% = disk almost full.
+  - Flags: -h human-readable sizes (G/M) instead of blocks.
+- du -sh .
+  - Out: One line with the total size of the current dir, like 1.5M  ..
+  - Flags: -s summary only / -h human-readable. Plain du dir lists every subdir.
+- free -h
+  - Out: Mem: and Swap: rows with total used free shared buff/cache available. Watch available, not free.
+  - Flags: -h human-readable (Mi/Gi).
+- whereis ls
+  - Out: Paths of binary, source and man page, e.g. ls: /usr/bin/ls; missing parts left blank.
+  - Flags: none; checks fixed system dirs, not PATH.
+- which ls
+  - Out: Full path of the executable that would actually run, e.g. /usr/bin/ls (first match in PATH).
+  - Flags: none; no output if not found.
+
+4. Compression (Labsheet 1.4)
+
+- tar cf docs.tar docs
+  - Out: Nothing; bundles docs into an uncompressed archive (check with ls -l).
+  - Flags: c create / f archive filename (must come right after the flags, before the sources).
+- tar xf docs.tar
+  - Out: Nothing; unpacks into the current dir, silently overwriting same-named files.
+  - Flags: x extract / f file. Only for plain .tar.
+- tar czf docs.tar.gz docs
+  - Out: Nothing; creates and gzip-compresses in one step (smaller than .tar).
+  - Flags: c create / z gzip / f file.
+- tar xzf docs.tar.gz
+  - Out: Nothing; decompresses and unpacks. Using xf on a .tar.gz errors.
+  - Flags: x extract / z gunzip / f file.
+- tar cjf docs.tar.bz2 docs
+  - Out: Nothing; bzip2 archive: usually smaller than gzip but slower.
+  - Flags: c create / j bzip2 / f file.
+- tar xjf docs.tar.bz2
+  - Out: Nothing; unpacks a .tar.bz2.
+  - Flags: x extract / j bunzip2 / f file.
+- find .
+  - Out: Every file/dir path under the current dir, one per line (used to verify extractions).
+  - Flags: none here.
+- gzip log.txt
+  - Out: Nothing; log.txt is replaced by log.txt.gz (single files only, no folders).
+  - Flags: none; -k keeps the original too.
+- gzip -d log.txt.gz
+  - Out: Nothing; restores log.txt, removes the .gz. Same as gunzip.
+  - Flags: -d decompress.
+
+5. Network, Installation & Shortcuts (Labsheet 1.5)
+
+- ping -c 4 example.com
+  - Out: One reply line per packet with time in ms, then a summary: sent/received/% loss.
+  - Flags: -c N stop after N packets (otherwise runs until Ctrl+C).
+- whois example.com
+  - Out: Registrar, creation/expiry dates, name servers. May need installing.
+  - Flags: none.
+- dig example.com
+  - Out: DNS reply; the ANSWER SECTION shows the A record (IPv4), plus query time and which server answered.
+  - Flags: add a record type: dig example.com MX shows mail servers.
+- dig -x 8.8.8.8
+  - Out: Reverse lookup: PTR record with the hostname for that IP (answer may be empty).
+  - Flags: -x reverse lookup, give a plain IP.
+- wget https://example.com/index.html
+  - Out: Progress bar (%, speed, ETA); saves the file in the current dir under its remote name.
+  - Flags: none; works over HTTP/HTTPS/FTP and follows redirects.
+- wget -c https://example.com/index.html
+  - Out: Resumes a half-downloaded file (reports bytes already downloaded) instead of restarting.
+  - Flags: -c continue; the server must support partial downloads.
+- ./configure && make && sudo make install
+  - Out: configure checks the system and writes a Makefile; make compiles; make install copies to e.g. /usr/local/bin.
+  - Flags: && runs the next step only if the previous succeeded; sudo needed for system dirs.
+- sudo dpkg -i myapp_1.0_amd64.deb
+  - Out: Unpacks and sets up a Debian/Ubuntu package; no automatic dependency download.
+  - Flags: -i install. If deps fail: sudo apt --fix-broken install.
+- sudo rpm -Uvh myapp-1.0-1.x86_64.rpm
+  - Out: Fedora/RHEL package install with a #### progress bar to [100%].
+  - Flags: -U upgrade/install / -v verbose / -h hash-mark progress.
+- Ctrl+C
+  - Out: Prints ^C and kills the foreground program (e.g. ping then prints its summary).
+  - Flags: sends SIGINT; on an empty prompt it just discards the typed line.
+- Ctrl+Z
+  - Out: [1]+ Stopped sleep 300; program paused (not killed), state preserved.
+  - Flags: SIGTSTP; resume with fg (foreground) or bg (background), list with jobs.
+- Ctrl+D
+  - Out: On an empty prompt: logout / closes the shell. In programs like cat > it means end of input.
+  - Flags: same as typing exit at a prompt.
+- Ctrl+W
+  - Out: Erases the word just before the cursor (fixes a typo'd last argument).
+  - Flags: press repeatedly to delete word by word.
+- Ctrl+U
+  - Out: Erases from the line start up to the cursor.
+  - Flags: Ctrl+Y pastes the erased text back.
+- Ctrl+R
+  - Out: Shows a (reverse-i-search) prompt; type part of an old command and it appears.
+  - Flags: Ctrl+R again = next older match / Enter runs / arrows edit / Ctrl+C or Ctrl+G cancels.
+- !!
+  - Out: Expands to the previous command and runs it.
+  - Flags: sudo !! reruns it as root / !42 reruns history entry 42. Repeats typos too.
+- exit
+  - Out: Ends the shell (logout; window closes if it is the only session). Inside su/ssh it only returns to the previous shell.
+  - Flags: exit 1 ends with status 1 (readable via $? by a caller).
+
+6. Pipes, Filters & I/O (Labsheet 1.6)
+
+- ls | wc -l
+  - Out: One number: how many entries ls listed.
+  - Flags: | feeds the left command's output into the right command / -l count lines.
+- cat names.txt | sort
+  - Out: File's lines in alphabetical order (file unchanged).
+  - Flags: none; chain more pipes freely.
+- grep "Linux" os.txt
+  - Out: Every line containing Linux (case-sensitive). No match = no output.
+  - Flags: -n line numbers / -c count / -v invert / -i ignore case (full list in section 7).
+- sort -n nums.txt
+  - Out: Lines sorted; with -n as numbers (2, 10, 100) not text.
+  - Flags: -n numeric / -r reverse.
+- wc -l os.txt
+  - Out: Line count followed by filename, e.g. 3 os.txt.
+  - Flags: -l lines / -w words / -c bytes; no flag = all three.
+- ls -l | head -5
+  - Out: First 5 lines of another command's output.
+  - Flags: -5 is shorthand for -n 5.
+- cut -d',' -f1,3 students.csv
+  - Out: Only fields 1 and 3 of each line (name and branch).
+  - Flags: -d',' delimiter (default tab) / -f1,3 field numbers, counted from 1.
+- sort fruits.txt | uniq -c
+  - Out: Each distinct line once, prefixed with how many times it occurred.
+  - Flags: -c count / -d only duplicated lines. uniq only collapses adjacent repeats, so sort first.
+- ls > files.txt
+  - Out: Nothing on screen; stdout goes into the file, overwriting it.
+  - Flags: > overwrite.
+- date >> log.txt
+  - Out: Nothing on screen; appends to the end of the file (created if missing).
+  - Flags: >> append.
+- sort < names.txt
+  - Out: Same as sort names.txt; file is fed to stdin and never modified.
+  - Flags: < input redirection.
+- cat unknown.txt 2> error.log
+  - Out: Nothing on screen; the No-such-file error lands in error.log.
+  - Flags: 2> redirect stderr (file descriptor 2).
+- seq 1 20 > numbers.txt
+  - Out: Nothing; file with numbers 1-20, one per line (handy test data).
+  - Flags: seq FIRST LAST.
+
+7. grep and Regular Expressions (Labsheet 2 + Assignment)
+
+Syntax: grep [OPTIONS] PATTERN [FILE...]. Prints matching lines, never edits files. Quote patterns that contain spaces or special characters. No FILE = reads stdin (pipe). Single-letter flags can be glued: -in = -i -n.
+
+7a. Options
+
+- grep "Engineering" employees.txt
+  - Out: Every line containing the text (case-sensitive).
+  - Flags: none; exit status 0 = match found, 1 = none.
+- grep -in "error" server_log.txt
+  - Out: All ERROR/Error/error lines, each prefixed with its line number like 4:2026-....
+  - Flags: -i ignore case / -n show line numbers.
+- grep -ic "error" server_log.txt
+  - Out: Just a number: count of matching lines (case-insensitive), e.g. 3.
+  - Flags: -c count lines only (counts lines, not occurrences).
+- grep -iv "info" server_log.txt
+  - Out: Lines that do NOT contain info in any case (the WARNING and ERROR lines).
+  - Flags: -v invert match / -i ignore case.
+- grep -won "IP" poem.txt
+  - Out: 6:IP - only the matched whole word, with its line number (ignores ZIP, SHIP...).
+  - Flags: -w whole word / -o print only the matched text / -n line number.
+- grep -x "debug=true" app.conf
+  - Out: debug=true - only if the pattern equals the entire line.
+  - Flags: -x whole-line match.
+- grep -l "ERROR" *.txt
+  - Out: Only file names that contain a match, e.g. server_log.txt.
+  - Flags: -l files with matches / -L files WITHOUT matches (opposite).
+- grep -rn "debug" .
+  - Out: Searches every file in the dir tree; lines look like ./app.conf:5:debug=true.
+  - Flags: -r recursive (-R also follows symlinks) / -n line numbers.
+- grep -C 1 "ERROR" server_log.txt
+  - Out: Each ERROR line plus 1 line of context above and below.
+  - Flags: -C N N lines both sides / -A N after only / -B N before only.
+- grep -inE "error|warning" server_log.txt
+  - Out: Lines with either word, any case, with line numbers.
+  - Flags: -E extended regex (+ ? | () work unescaped; same as egrep) / -i / -n.
+- grep -e "ERROR" -e "WARNING" server_log.txt
+  - Out: Lines matching either pattern (OR).
+  - Flags: -e PATTERN explicit pattern, repeatable.
+- grep -f patterns.txt server_log.txt
+  - Out: Lines matching any pattern listed (one per line) in patterns.txt.
+  - Flags: -f FILE read patterns from a file.
+- grep -F "92%" server_log.txt
+  - Out: Lines containing the literal text 92%.
+  - Flags: -F fixed string, no regex meaning (same as fgrep).
+- grep -q "ERROR" server_log.txt && echo 'Errors found'
+  - Out: grep prints nothing; the echo runs only if a match exists.
+  - Flags: -q quiet, only sets exit status (for scripts and if).
+- grep -s "test" missing_file.txt
+  - Out: Nothing, and no No-such-file error message.
+  - Flags: -s suppress error messages about missing/unreadable files.
+- grep -H "debug" app.conf
+  - Out: app.conf:debug=true - filename shown even for a single file.
+  - Flags: -H always show filename / -h never show it (useful with many files).
+- grep -m 2 "INFO" server_log.txt
+  - Out: First 2 matching lines only.
+  - Flags: -m N stop after N matches.
+- grep -b "ERROR" server_log.txt
+  - Out: Each match prefixed with the byte offset where its line starts.
+  - Flags: -b byte offset.
+- grep -a "login" server_log.txt
+  - Out: Matching lines printed even if the file is binary.
+  - Flags: -a treat binary as text.
+- grep -P '(?<=port=)\d+' app.conf
+  - Out: 8080 - only the digits after port=.
+  - Flags: -P Perl regex (lookahead/lookbehind, \d); GNU grep only.
+- grep -o '[0-9]\{3\}\.[0-9]\{3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' server_log.txt
+  - Out: Only the IP-like text, e.g. 192.168.1.100.
+  - Flags: -o matched part only / \{n,m\} repeat n to m times / \. literal dot.
+
+7b. Regex patterns from the assignment
+
+- grep '^A' students.txt
+  - Out: Lines that start with A.
+  - Pattern: ^ start-of-line anchor.
+- grep 'CSE$' students.txt
+  - Out: Lines that end with CSE.
+  - Pattern: $ end-of-line anchor.
+- grep '[0-9]' students.txt
+  - Out: Lines containing at least one digit.
+  - Pattern: [0-9] any one digit; [a-z], [A-Z] work the same; [^...] = NOT these characters.
+- grep '[0-9][0-9][0-9]' students.txt
+  - Out: Lines containing 3 digits in a row.
+  - Pattern: repeat the class; -E '[0-9]{3}' is equivalent; add -w for exactly 3 digits.
+- grep -E '^[+-]?[0-9]+$' nums_mixed.txt
+  - Out: Only whole-line integers (42, -17, +8); skips 3.14, hello, abc123.
+  - Pattern: ^...$ whole line / ? optional / + one or more.
+- grep -E '[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' email.txt
+  - Out: Lines with a valid-looking email; skips bad@, @bad.com.
+  - Pattern: user@domain.tld; {2,} = 2 or more letters; \. literal dot.
+- grep '\.sh$' filelist.txt
+  - Out: Only names ending in .sh.
+  - Pattern: \. literal dot (plain . means any character).
+- grep 'Linux$' linux.txt
+  - Out: Lines ending with the word Linux.
+  - Pattern: $ anchor.
+- grep -E '^[6-9][0-9]{9}$' mobiles.txt
+  - Out: Valid 10-digit mobile numbers starting 6-9.
+  - Pattern: {9} exactly 9 more digits; anchors reject longer/shorter.
+- grep -E '^[A-Z].*[0-9]$' mixed.txt
+  - Out: Lines starting with a capital and ending with a digit.
+  - Pattern: .* any characters, any length.
+- grep -E '^[A-Z].[^A-Za-z0-9 ].[0-9]$' mixed.txt
+  - Out: Same, but also containing at least one special character.
+  - Pattern: [^A-Za-z0-9 ] = anything not a letter, digit or space.
+- grep -c '^$' sample.txt
+  - Out: Number of blank lines (grep -v '^$' shows the non-blank ones).
+  - Pattern: ^$ start immediately followed by end = empty line.
+- grep -E '^(ERROR|WARNING|INFO)' simple_log.txt
+  - Out: Lines beginning with any of the three levels.
+  - Pattern: (a|b|c) alternation; grep '^ERROR' for one level.
+
+8. sed - Stream Editor (Labsheet 2 + Assignment)
+
+Syntax: sed [OPTIONS] 'COMMAND' [FILE...]. Reads one line at a time into the pattern space, applies commands, prints the result. By default the file is NOT changed (output goes to the screen) and every line is printed.
+
+- sed 's/development/production/' app.conf
+  - Out: Whole file printed with the first development on each line replaced.
+  - Flags: s/old/new/ substitute (no flag = first match per line).
+- sed 's/Linux/Unix/g' text.txt
+  - Out: Every Linux on every line replaced (without g only the first per line).
+  - Flags: g global / N replace only the Nth match (e.g. s/cat/dog/2) / I case-insensitive (GNU, e.g. s/error/OK/gI).
+- echo "/usr/local/bin" | sed 's#/usr#/opt#'
+  - Out: /opt/local/bin.
+  - Flags: any character can be the delimiter (here #), handy for paths.
+- sed 's/Fail/Needs_Improvement/g' marks.txt
+  - Out: Marks file with every Fail replaced.
+  - Flags: g all occurrences.
+- sed -n '/ERROR/p' server_log.txt
+  - Out: Only the ERROR lines.
+  - Flags: -n suppress auto-print / p print. /regex/Ip ignores case (error, Error, ERROR).
+- sed -n '2,4p' employees.txt
+  - Out: Lines 2 to 4 only.
+  - Flags: addresses: N one line / a,b range / $ last line (sed -n '$p') / /regex/ matching lines. First five lines: sed -n '1,5p'.
+- sed '/^#/d' app.conf
+  - Out: File without comment lines.
+  - Flags: d delete matching lines. sed '/^$/d' removes blank lines; sed '/^ *#/d;/^$/d' removes comments and blanks.
+- sed '/port=8080/a timeout=30' app.conf
+  - Out: timeout=30 added as a new line after the port line.
+  - Flags: a append after / $a text adds after the last line.
+- sed '/port=8080/i # Network settings' app.conf
+  - Out: New line inserted before the port line.
+  - Flags: i insert before.
+- sed '/debug=true/c debug=false' app.conf
+  - Out: The whole matching line replaced by debug=false.
+  - Flags: c change (replace entire line).
+- sed '=' poem.txt | head -4
+  - Out: Each line preceded by its line number on a separate line.
+  - Flags: = print line number.
+- echo "hello" | sed 'y/el/ip/'
+  - Out: hippo - character-by-character swap (e to i, l to p).
+  - Flags: y/set1/set2/ transliterate, like tr.
+- sed '3q' employees.txt
+  - Out: First 3 lines, then sed quits.
+  - Flags: q quit at that line.
+- sed -i.bak 's/8080/9090/' app2.conf
+  - Out: Nothing on screen; file changed in place, original kept as app2.conf.bak.
+  - Flags: -i edit in place (-i alone = no backup).
+- sed -e 's/localhost/127.0.0.1/' -e 's/development/production/' app.conf
+  - Out: Both substitutions applied in one pass.
+  - Flags: -e add another command (; between commands works too).
+- sed -f fix.sed app.conf
+  - Out: Output of the commands stored in fix.sed.
+  - Flags: -f FILE read the sed script from a file.
+- echo "John Smith" | sed -E 's/([A-Za-z]+) ([A-Za-z]+)/\2 \1/'
+  - Out: Smith John.
+  - Flags: -E (or -r) extended regex / ( ) capture a group / \1 \2 reuse it in the replacement.
+- echo "colour or color" | sed -E 's/colou?r/COLOR/g'
+  - Out: COLOR or COLOR.
+  - Flags: -E makes ?, +, | work without backslashes.
+- sed 's/  */ /g' spaces.txt
+  - Out: Runs of spaces squeezed to a single space.
+  - Flags: pattern is one space then space-star (one or more spaces).
+- sed 's/^Linux/Unix/' linux.txt
+  - Out: Replaces Linux only when it is at the start of a line.
+  - Flags: ^ start anchor; s/Linux$/Unix/ replaces only at the end of a line.
+- sed 's/ *, */|/g; s/^ *//; s/ *$//' messy.csv
+  - Out: Commas become | and stray spaces vanish (clean separated records).
+  - Flags: ; chains commands /   *  zero or more spaces.
+- grep '^ERROR' simple_log.txt | sed 's/^ERROR/ALERT/'
+  - Out: Only the ERROR lines, with ERROR changed to ALERT.
+  - Flags: | grep selects, sed rewrites.
+
+9. awk (Labsheet 3)
+
+Syntax: awk 'pattern { action }' file. Each line is a record split into fields $1 $2 ... ($0 = whole line). No pattern = action on every line; no action = print the line.
+
+- awk -F',' '{print $2}' employees.txt
+  - Out: Column 2 (Name) of every line.
+  - Flags: -F',' input field separator (default: whitespace) / $N Nth field / $0 whole line.
+- awk -F',' '{print $1, $3}' employees.txt
+  - Out: Fields 1 and 3 joined by a space (e.g. 101 Engineering).
+  - Flags: comma in print = output separator OFS.
+- awk -F',' '{print $NF}' employees.txt
+  - Out: Last field (City) of each line.
+  - Flags: NF = number of fields; $NF last, $(NF-1) second last.
+- awk '{print NR, $0}' server_log.txt
+  - Out: Each line preceded by its line number.
+  - Flags: NR = current record (line) number across all input.
+- awk -F',' '{printf "%-15s %8s\n", $2, $4}' employees.txt
+  - Out: Neat aligned columns: name left-aligned in 15 chars, salary right-aligned in 8.
+  - Flags: printf C-style, no automatic newline / %-15s left string width 15 / %8s right width 8 / %d integer / \n newline.
+- awk -F',' 'BEGIN {print "Name\t\tDept"} {print $2"\t"$3}' employees.txt
+  - Out: A header printed once, then Name and Dept tab-separated for every row.
+  - Flags: BEGIN {} runs once before input / \t tab.
+- awk -F',' 'NR>1 {sum += $4} END {print "Total Salary:", sum}' employees.txt
+  - Out: One line: Total Salary: 750000.
+  - Flags: NR>1 skips the header row / END {} runs once after all input / += accumulates.
+- awk 'BEGIN {FS=","; OFS=" | "} {print $1, $2, $3}' employees.txt
+  - Out: Same fields rejoined with |, e.g. 101 | Alice Johnson | Engineering.
+  - Flags: FS input / OFS output field separator (same as -F, set inside the program).
+- awk 'BEGIN{RS=","} {print NR": "$0}' <<< "a,b,c"
+  - Out: 1: a, 2: b, 3: c (records split at commas, not newlines).
+  - Flags: RS input / ORS output record separator (default newline).
+- awk '/ERROR/' server_log.txt
+  - Out: Lines containing ERROR (pattern only, so default action prints).
+  - Flags: /regex/ pattern on the whole line.
+- awk -F',' '$3 ~ /Engineering/ {print $2}' employees.txt
+  - Out: Names of employees whose Department field matches.
+  - Flags: ~ field matches regex / !~ does not match.
+- awk -F',' '$4 > 80000 {print $2, $4}' employees.txt
+  - Out: Name and salary for salaries above 80000.
+  - Flags: comparison patterns: ==  !=  <  >  <=  >=. Combine with && (and) / || (or) / ! (not).
+- awk 'NR>1 {print $2, $3, $3*$4}' sales.txt
+  - Out: Product, quantity and total value (quantity x price); header skipped.
+  - Flags: arithmetic + - * / % ^; fields are numbers when used in math.
+- awk -F',' '{print $2, length($2)}' employees.txt
+  - Out: Each name followed by its character count.
+  - Flags: length(s) / substr(s,start,len) substring / index(s,t) position of t in s.
+- awk -F',' '{print toupper($3)}' employees.txt | sort -u
+  - Out: Unique departments in UPPERCASE.
+  - Flags: toupper() / tolower().
+- awk '{n=split($0,parts,":"); print n, parts[1]}' <<< "08:23:45"
+  - Out: 3 08 - number of pieces, then the first piece.
+  - Flags: split(str, arr, sep) fills arr from index 1 and returns the count.
+- awk '{gsub(/localhost/, "127.0.0.1"); print}' app.conf
+  - Out: File with every localhost replaced by the IP.
+  - Flags: gsub(re,new) all matches / sub(re,new) first match only; works on $0 unless a target is given.
+- awk 'NR>1 {total[$1] += $3*$4} END {for (r in total) print r, total[r]}' sales.txt
+  - Out: One line per region with its total sales (order not guaranteed).
+  - Flags: associative array total[key] / for (k in arr) loops over keys.
+- awk -F',' '{if ($4 >= 80000) print $2, "High"; else print $2, "Normal"}' employees.txt
+  - Out: Each name tagged High or Normal.
+  - Flags: if/else, while, for work like C.
+- awk -F',' 'function bonus(sal) { return sal * 0.10 } { print $2, bonus($4) }' employees.txt
+  - Out: Each name with 10% of salary.
+  - Flags: function name(args) { return ... } user-defined function.
+- awk -F',' -v dept="HR" '$3==dept {print $2}' employees.txt
+  - Out: Names in the HR department.
+  - Flags: -v var=value pass a shell value into awk before it starts.
+- awk -f report.awk employees.txt
+  - Out: Output of the program stored in report.awk.
+  - Flags: -f FILE read the awk program from a file.
+- awk -F',' '{if ($3=="HR") next; print $2}' employees.txt
+  - Out: All names except HR ones.
+  - Flags: next skip the rest of this record, go to the next line.
+- awk -F',' 'BEGIN{OFS=","} {$3="Dept-"$3; print}' employees.txt
+  - Out: Rows with the Department field rewritten (Dept-Engineering).
+  - Flags: assigning $N rebuilds $0 using OFS; NF=2 truncates to 2 fields.
+- awk '/WARNING/,/ERROR/' server_log.txt
+  - Out: From the first WARNING line through the next ERROR line, inclusive.
+  - Flags: pat1,pat2 range pattern.
+- awk -F',' 'BEGIN { print "Marketing Employees:"; count=0 } $3=="Marketing" { print " -", $2; count++ } END { print "Total:", count }' employees.txt
+  - Out: Header, one line per Marketing employee, then Total: 3.
+  - Flags: BEGIN + pattern + END combined; count++ increments.
+- awk -F',' '$3 ~ /Engineering|Finance/ && $4 > 85000 {print NR": "$2, $4}' employees.txt
+  - Out: Numbered lines like 3: Charlie Brown 92000 for high earners in those depts.
+  - Flags: && both conditions / regex alternation with |.
+
+10. Shell Programming Basics (Week 4)
+
+10a. Scripts, I/O, variables
+
+- echo $SHELL
+  - Out: Path of your login shell, e.g. /bin/bash.
+  - Flags: none; cat /etc/shells lists installed shells.
+- #!/bin/bash
+  - Out: Nothing; first line of a script (shebang) telling the kernel which interpreter to use. Other # lines are comments.
+  - Flags: n/a.
+- chmod +x hello.sh
+  - Out: Nothing; gives the file execute permission.
+  - Flags: +x add execute. Needed before ./hello.sh, otherwise: Permission denied.
+- ./hello.sh
+  - Out: Runs the script using the interpreter in its shebang.
+  - Flags: ./ = this directory. Alternative without chmod: bash hello.sh.
+- nano hello.sh
+  - Out: Opens the nano editor (Ctrl+O save, Ctrl+X exit).
+  - Flags: none; vim/gedit work too.
+- echo "Today is: $(date +%d-%m-%Y)"
+  - Out: Prints text with variables/commands expanded.
+  - Flags: -n no trailing newline (used in loops). Double quotes expand $var; single quotes don't.
+- read uname
+  - Out: Waits for you to type a line, stores it in $uname.
+  - Flags: -p "Enter: " shows a prompt (read -p "Enter a number: " num); read a b c splits input into several variables; read x <<< "text" feeds it from a string.
+- name="Priya"; echo "Name : $name"
+  - Out: Name : Priya.
+  - Flags: no spaces around =; names are case-sensitive, start with letter/underscore; ${name} is the safe form.
+- export college
+  - Out: Nothing; makes the variable visible to child processes.
+  - Flags: none.
+- readonly pi
+  - Out: Nothing; a later pi=3.0 fails with readonly variable.
+  - Flags: none.
+- unset city
+  - Out: Nothing; variable removed, echo $city prints empty.
+  - Flags: unset arr[1] removes one array element.
+- today=$(date +%A)
+  - Out: Nothing; stores the command's output in the variable (command substitution).
+  - Flags: $(cmd) modern form / backticks are the old equivalent.
+
+10b. Special variables
+
+- set -- Linux Shell Programming; echo "$0 $1 $2 $#"
+  - Out: Script name, first arg, second arg, then 3 (the count). In a real script you run ./args.sh Linux Shell Programming.
+  - Flags: $0 script name / $1-$9 arguments (${10} beyond 9) / $# argument count.
+- echo "$* | $@"
+  - Out: All arguments (look identical when printed).
+  - Flags: "$*" = one single word, joined by first char of IFS / "$@" = each argument separate (use "$@" in loops).
+- ls /home > /dev/null; echo $?
+  - Out: 0 (success); after a failing command it shows non-zero, e.g. 2 for a missing dir.
+  - Flags: $? exit status of the last command.
+- echo $$
+  - Out: PID of the current shell/script.
+  - Flags: $$ own PID.
+- sleep 5 & echo $!
+  - Out: PID of the background job just started.
+  - Flags: $! PID of last background process / $- current shell option flags.
+
+10c. Arrays
+
+- fruits=("Apple" "Banana" "Mango")
+  - Out: Nothing; creates an indexed array (indices start at 0). Also: colors[0]="Red".
+  - Flags: none.
+- echo "${fruits[0]}"
+  - Out: Apple (first element).
+  - Flags: ${arr[N]} element N.
+- echo "${fruits[@]}"
+  - Out: All elements.
+  - Flags: [@] each element separate / [*] joined into one word.
+- echo "${#fruits[@]}"
+  - Out: Number of elements (3).
+  - Flags: ${#arr[@]} count.
+- echo "${!fruits[@]}"
+  - Out: Valid indices, e.g. 0 1 2 (gaps appear after unset).
+  - Flags: ${!arr[@]} list of indices.
+- fruits+=("Kiwi")
+  - Out: Nothing; appends an element.
+  - Flags: += append / unset fruits[1] remove one element (leaves an index gap) / unset fruits remove the array.
+
+10d. Operators
+
+- echo $((15 + 4))
+  - Out: 19.
+  - Flags: $(( )) arithmetic: + - * / %  (integer division;  power). Also expr 15 \* 4 (escape *) and let "c = a * b".
+- [ $a -lt $b ] && echo yes || echo no
+  - Out: yes if a < b, else no.
+  - Flags: numeric tests -eq -ne -gt -lt -ge -le; spaces required inside [ ].
+- [ "$s1" = "$s2" ]
+  - Out: Nothing; exit status 0 if strings equal (check with $? or &&).
+  - Flags: = equal / != not equal / -z str empty / -n str non-empty.
+- [ $n -ge 10 -a $n -le 100 ]
+  - Out: True if n is between 10 and 100.
+  - Flags: -a AND / -o OR / ! NOT (classic); && and || join separate tests.
+- [ -f hello.sh ]
+  - Out: True if it exists and is a regular file.
+  - Flags: -e exists / -f regular file / -d directory / -r readable / -w writable / -x executable / -s size > 0.
+
+10e. Decisions
+
+- if [ $((num % 2)) -eq 0 ]; then echo "even"; else echo "odd"; fi
+  - Out: even or odd.
+  - Flags: if ... then ... fi / add else / chain with elif ...; then; if blocks can be nested.
+- case $day in 1) echo "Monday" ;; 5) echo "Friday" ;; *) echo "Invalid" ;; esac
+  - Out: Runs the block of the first matching pattern.
+  - Flags: ;; ends each block / *) default / patterns may use classes: [aeiou]), [a-zA-Z]).
+- [[ "$s1" == s* ]]
+  - Out: Nothing; true if the string matches the pattern.
+  - Flags: [[ ]] is the bash-extended test (pattern matching).
+
+11. Loops (Week 5)
+
+- for i in 1 2 3 4 5; do echo "Number: $i"; done
+  - Out: Number: 1 ... Number: 5.
+  - Flags: for var in list; do ... done; the variable takes each item in turn.
+- for i in {1..5}; do echo "$i"; done
+  - Out: 1 to 5, one per line.
+  - Flags: {a..b} brace-expansion range.
+- for ((i=2; i<=10; i+=2)); do echo "$i"; done
+  - Out: Even numbers 2, 4, 6, 8, 10.
+  - Flags: C-style for ((init; condition; step)); i+=2 step of 2, i++ step of 1.
+- i=1; while [ $i -le 5 ]; do echo "Number: $i"; i=$((i + 1)); done
+  - Out: Number: 1 ... Number: 5.
+  - Flags: while repeats while the condition is TRUE (checked before each pass); remember to update the counter.
+- i=1; until [ $i -gt 5 ]; do echo "Number: $i"; i=$((i + 1)); done
+  - Out: Same 1-5 output.
+  - Flags: until repeats while the condition is FALSE, stops when it becomes true.
+- for ((i=1; i<=3; i++)); do for ((j=1; j<=3; j++)); do echo -n "$i$j=$((ij)) "; done; echo; done
+  - Out: A 3x3 multiplication grid, one row per outer pass.
+  - Flags: nested loop: inner runs fully for each outer pass / echo -n no newline / bare echo ends the row.
+- for subject in "${subjects[@]}"; do echo "Subject: $subject"; done
+  - Out: One line per array element.
+  - Flags: "${arr[@]}" expands elements individually (keeps spaces inside items).
+- for arg in "$@"; do echo "Argument: $arg"; done
+  - Out: One line per command-line argument.
+  - Flags: "$@" each argument separate; use a counter (i=$((i+1))) to print positions.
+- for ((i=1; i<=10; i++)); do if [ $i -eq 5 ]; then break; fi; echo "$i"; done
+  - Out: 1 2 3 4, then the loop ends.
+  - Flags: break leaves the innermost loop immediately.
+- for ((i=1; i<=7; i++)); do if [ $i -eq 5 ]; then continue; fi; echo "$i"; done
+  - Out: 1 2 3 4 6 7 (5 skipped).
+  - Flags: continue skips to the next iteration (loop keeps going).
+- while true; do ...; break; done
+  - Out: Infinite loop, ended only by a break (typical for menus). Menu: show options, read -p "Enter choice: " choice, case on it, 2) break ;; to exit.
+  - Flags: true always succeeds.
+- sum=0; for ((i=1; i<=10; i++)); do sum=$((sum + i)); done; echo "Sum = $sum"
+  - Out: Sum = 55.
+  - Flags: $(( )) accumulates. Same pattern with f=$((f * i)) gives a factorial.
+
+12. I/O Redirection, Pipes, Here Documents, Functions (Week 6)
+
+12a. Redirection and pipes
+
+- echo "First line" > output.txt; echo "Second line" >> output.txt
+  - Out: Nothing on screen; file holds both lines (cat output.txt to check).
+  - Flags: > overwrite / >> append.
+- cat < names.txt
+  - Out: File contents, read via stdin.
+  - Flags: < stdin from a file. Streams: stdin = fd 0, stdout = fd 1, stderr = fd 2.
+- ls /home 1> out1.txt 2> err1.txt
+  - Out: Nothing on screen; normal output and errors go to separate files.
+  - Flags: 1> stdout (same as >) / 2> stderr.
+- ls /home /does_not_exist &> all_output.txt
+  - Out: Nothing on screen; both streams in one file.
+  - Flags: &> both streams / > file 2>&1 is the portable equal. Order matters: 2>&1 must come AFTER > file.
+- ls /does_not_exist > /dev/null 2>&1; echo $?
+  - Out: Only the exit status (non-zero) is shown; all output discarded.
+  - Flags: /dev/null discards anything written to it.
+- printf '%s\n' bash bash shell awk sed bash shell | sort | uniq | wc -l
+  - Out: 5 (sorted, duplicates removed, lines counted).
+  - Flags: | pipes stdout to the next stdin (no temp file), unlike > which writes to a file; printf '%s\n' prints each argument on its own line.
+
+12b. Here documents and here strings
+
+- cat << EOF ... lines ... EOF
+  - Out: Prints the block between the markers (multi-line input to a command). $USER and $(date) are expanded.
+  - Flags: <<'EOF' (quoted marker) stops all expansion, so $USER prints literally. cat > settings.conf << EOF writes the block to a file.
+- read name <<< "Asha"
+  - Out: Nothing; $name becomes Asha.
+  - Flags: <<< here string: one string plus newline as stdin. wc -w <<< "shell programming laboratory" prints 3.
+
+12c. Functions
+
+- greet() { echo "Welcome to Shell Programming."; }; greet
+  - Out: Prints the message each time greet is called.
+  - Flags: define before use / function task2 { ...; } is the alternate syntax.
+- show_sum() { local a=10; local b=20; echo "Sum = $((a + b))"; }; show_sum
+  - Out: Sum = 30.
+  - Flags: local keeps variables private to the function (invisible after it returns).
+- display() { echo "First : $1"; echo "Count : $#"; }; display Linux Shell
+  - Out: First : Linux, Count : 2.
+  - Flags: $1 $2 function arguments / $# count / "$@" each argument separate / "$*" all as one word.
+- check_number() { if [ "$1" -gt 0 ]; then return 0; else return 1; fi; }; check_number 25; echo $?
+  - Out: 0 for success, 1 for failure.
+  - Flags: return N sets exit status (0-255, 0 = success); read it with $?. Default status = last command's.
+- get_message() { echo "Hello from function"; }; message=$(get_message)
+  - Out: Nothing; $message holds the function's printed output.
+  - Flags: echo sends DATA to stdout (capture with $( )); return sends a STATUS code.
+- file_check() { [ -f "$1" ]; }; if file_check "data.txt"; then echo found; fi
+  - Out: found only if the file exists as a regular file.
+  - Flags: a function whose last command is a test works directly as an if condition.
+- log_message() { echo "$(date '+%Y-%m-%d %H:%M:%S') : $1" >> "$LOGFILE"; }
+  - Out: Nothing on screen; appends a timestamped line to the log each call.
+  - Flags: >> append / date '+%Y-%m-%d %H:%M:%S' custom timestamp.
+- check_file() { echo "$1 not found." >&2; return 1; }; check_file x 2> errors.txt
+  - Out: Nothing on screen; the message goes to errors.txt.
+  - Flags: >&2 send an echo to stderr / caller captures with 2>.
+- print_report() { print_header; print_body; }
+  - Out: Runs both functions in order.
+  - Flags: functions can call other functions (define those first).
